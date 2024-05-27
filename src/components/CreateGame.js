@@ -16,14 +16,13 @@ class CreateGame extends React.Component {
 
   createGame = async () => {
     await this.props.linkContract.approve(
-      this.props.gameContract.getAddress(),
-      ethers.parseUnits(this.state.wager)
+      this.props.gameContract.address,
+      ethers.utils.parseUnits(this.state.wager)
     );
     const session = await this.props.gameContract.createGame(
-      ethers.parseUnits(this.state.wager),
+      ethers.utils.parseUnits(this.state.wager),
       this.state.timer
     );
-    console.log(session);
   };
 
   render() {
@@ -42,7 +41,6 @@ class CreateGame extends React.Component {
             placeholder="24 (hours)"
           />{" "}
           <br />
-          {console.log(this.state.timer)}
           <Button
             style={{ marginTop: "10px" }}
             color="blue"

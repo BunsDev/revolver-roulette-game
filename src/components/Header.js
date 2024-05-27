@@ -12,15 +12,16 @@ class NavBar extends React.Component {
 
   async componentDidMount() {
     //check if wallet is connected
-    let accounts = await signer.getAddress();
-    this.setState({ account: accounts });
+    const accounts = await provider.send("eth_requestAccounts", []);
+    console.log(accounts[0]);
+    this.setState({ account: accounts[0] });
     if (accounts.length > 0) {
       this.setState({ connectedIcon: <Icon name="check" color="green" /> });
     }
     //get network
     const networkId = await provider.getNetwork();
     console.log(networkId.chainId);
-    if (networkId.chainId === 43113n && window.ethereum) {
+    if (networkId.chainId === 43113 && window.ethereum) {
       this.setState({ networkIcon: <Icon name="check" color="green" /> });
     }
   }

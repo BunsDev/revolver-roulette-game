@@ -567,14 +567,14 @@ const abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
         internalType: "bytes32",
         name: "",
         type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
       },
     ],
     name: "wagers",

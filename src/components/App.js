@@ -8,6 +8,7 @@ import { ethers } from "ethers";
 import Header from "./Header";
 import { Container } from "semantic-ui-react";
 import StartGame from "./StartGame";
+import Game from "./Game";
 
 class App extends React.Component {
   constructor(props) {
@@ -19,9 +20,8 @@ class App extends React.Component {
   }
 
   async componentDidMount() {
-    const signer = await provider.getSigner();
     let gameContract = new ethers.Contract(
-      "0xD84C27b8Ee076bb824095732aD9887f95D0b66C5",
+      "0x61C68fd54D8290b2a1a9A9f981623a3C016b7643",
       gameAbi,
       signer
     );
@@ -40,6 +40,10 @@ class App extends React.Component {
           <Header />
           {console.log(this.state.gameContract)}
           <StartGame
+            gameContract={this.state.gameContract}
+            linkContract={this.state.linkContract}
+          />
+          <Game
             gameContract={this.state.gameContract}
             linkContract={this.state.linkContract}
           />

@@ -61,8 +61,8 @@ contract Revolver is VRFConsumerBaseV2Plus {
 
     mapping(bytes32 => GameSession) public gameSessions;
     bytes32[] public sessionIds;
-    //address => gamesession => wager
-    mapping(address => mapping(bytes32 => uint256)) public wagers;
+    //gamesession => address => wager
+    mapping(bytes32 => mapping(address => uint256)) public wagers;
 
     constructor(
         uint256 subscriptionId,
@@ -129,7 +129,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
         require(msg.sender == gs.player1 || msg.sender == gs.player2, "you're not a participant of this game!");
 
         require(linkToken.transferFrom(msg.sender, address(this), value), "deposit failed!");
-        wagers[msg.sender][sessionId] += value;
+        wagers[sessionId][msg.sender] += value;
         gameSessions[sessionId].pot += value;
 
         emit Deposit(msg.sender, value, sessionId);
@@ -185,7 +185,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
         require(gs.winner == address(0), "game over!");
         require(msg.sender == gs.turn, "not your turn!");
         require(msg.sender != gs.lastSpinner, "you've already spun the cylinder!");
-        require(wagers[gs.player1][sessionId] == wagers[gs.player2][sessionId], "wagers must be of equivalent value!");
+        require(wagers[sessionId][gs.player1] == wagers[sessionId][gs.player2], "wagers must be of equivalent value!");
 
         requestId = requestRandomWords();
         gameSessions[sessionId].lastSpinner = msg.sender;
@@ -258,7 +258,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
     }
 
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords)
+    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords)
         internal
         override
     {
