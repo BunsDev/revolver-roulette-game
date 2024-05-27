@@ -24,8 +24,6 @@ class JoinGame extends React.Component {
     );
     const wagerInWei = ethers.BigNumber.from(wager);
     const wagerInEther = ethers.utils.formatEther(wagerInWei);
-    console.log(wagerInEther);
-    console.log(typeof wagerInEther);
 
     this.setState({ wager: wagerInEther });
     return wager;
@@ -35,13 +33,15 @@ class JoinGame extends React.Component {
     if (!this.state.sessionId) {
       return;
     }
-    await this.getWager();
     const gameStruct = await this.props.gameContract.gameSessions(
       this.state.sessionId
     );
 
     this.setState({ player1: gameStruct[1] });
     this.setState({ player2: gameStruct[2] });
+    await this.getWager();
+
+    this.props.sessionId(this.state.sessionId);
   };
 
   joinGame = async () => {
@@ -53,14 +53,28 @@ class JoinGame extends React.Component {
       return;
     }
     const wager = await this.getWager();
-    await this.props.linkContract.approve(
-      this.props.gameContract.address,
-      wager
-    );
+    if (wager > 0) {
+      await this.props.linkContract.approve(
+        this.props.gameContract.address,
+        wager
+      );
+    }
 
-    const session = await this.props.gameContract.joinGame(
-      this.state.sessionId
-    );
+    await this.props.gameContract.joinGame(this.state.sessionId);
+  };
+
+  wagerDisplay = () => {
+    if (
+      this.state.wager &&
+      this.state.player2 !== "0x0000000000000000000000000000000000000000"
+    ) {
+      return <div>Wager: {this.state.wager / 2} LINK</div>;
+    } else if (
+      this.state.wager &&
+      this.state.player2 === "0x0000000000000000000000000000000000000000"
+    ) {
+      return <div>Wager: {Math.trunc(this.state.wager)} LINK</div>;
+    }
   };
 
   render() {
@@ -78,10 +92,8 @@ class JoinGame extends React.Component {
             Get Game Info
           </Button>
           <br />
-          {this.state.wager
-            ? `LINK in the pot: ${this.state.wager} LINK`
-            : null}
           <br />
+          {this.wagerDisplay()}
           {this.state.player1 ? `Player1: ${this.state.player1}` : null}
           <br />
           {this.state.player2 !== "0x0000000000000000000000000000000000000000"

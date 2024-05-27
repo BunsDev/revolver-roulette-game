@@ -206,6 +206,50 @@ const abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "player",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "sessionId",
+        type: "bytes32",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "randomNumber",
+        type: "uint256",
+      },
+    ],
+    name: "RevolverFired",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "bytes32",
+        name: "sessionId",
+        type: "bytes32",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "player",
+        type: "address",
+      },
+    ],
+    name: "SpinCylinder",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
         name: "to",
         type: "address",
       },
@@ -275,11 +319,6 @@ const abi = [
         internalType: "bytes32",
         name: "sessionId",
         type: "bytes32",
-      },
-      {
-        internalType: "uint256",
-        name: "requestId",
-        type: "uint256",
       },
     ],
     name: "fireRevolver",
@@ -367,6 +406,30 @@ const abi = [
     name: "joinGame",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "lastRequestIds",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {

@@ -18,6 +18,10 @@ contract Revolver is VRFConsumerBaseV2Plus {
 
     event GameCreated(address indexed player1, bytes32 indexed sessionId);
 
+    event RevolverFired(address indexed player, bytes32 indexed sessionId, uint256 indexed randomNumber);
+
+    event SpinCylinder(bytes32 indexed sessionId, address player);
+
     IVRFCoordinatorV2Plus immutable COORDINATOR;
     IERC20 linkToken;
 
@@ -63,6 +67,8 @@ contract Revolver is VRFConsumerBaseV2Plus {
     bytes32[] public sessionIds;
     //gamesession => address => wager
     mapping(bytes32 => mapping(address => uint256)) public wagers;
+    //gamesession => address => last request id
+    mapping(bytes32 => mapping(address => uint256)) public lastRequestIds;
 
     constructor(
         uint256 subscriptionId,
@@ -190,21 +196,25 @@ contract Revolver is VRFConsumerBaseV2Plus {
         requestId = requestRandomWords();
         gameSessions[sessionId].lastSpinner = msg.sender;
         gameSessions[sessionId].timestamp = block.timestamp;
+        lastRequestIds[sessionId][msg.sender] = requestId;
 
         emit RequestSent(msg.sender, requestId);
+        emit SpinCylinder(sessionId, msg.sender);
 
         return requestId;
 
     }
 
-    function fireRevolver(bytes32 sessionId, uint256 requestId) public {
+    function fireRevolver(bytes32 sessionId) public {
         GameSession memory gs = gameSessions[sessionId];
+        uint256 requestId = lastRequestIds[sessionId][msg.sender];
         RequestStatus memory request = s_requests[requestId];
 
         require(gs.lastSpinner == msg.sender, "not your turn to fire!");
         require(request.fulfilled, "VRF request not fulfilled!");
 
         uint256 randomNumber = request.randomWords[0] % 6;
+        emit RevolverFired(msg.sender, sessionId, randomNumber);
 
         //if bullet is fired
         if (randomNumber == 3) {

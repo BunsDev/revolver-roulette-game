@@ -14,6 +14,11 @@ import { Container, Button, Input, Segment } from "semantic-ui-react";
 class StartGame extends React.Component {
   state = {
     createOrJoin: null,
+    sessionId: null,
+  };
+
+  handleDataFromChild = (sessionId) => {
+    this.props.sessionId(sessionId);
   };
 
   render() {
@@ -35,17 +40,18 @@ class StartGame extends React.Component {
             >
               JOIN A GAME
             </Button>
-
             {this.state.createOrJoin === "create" ? (
               <CreateGame
                 gameContract={this.props.gameContract}
                 linkContract={this.props.linkContract}
+                sessionId={this.handleDataFromChild}
               />
             ) : null}
             {this.state.createOrJoin === "join" ? (
               <JoinGame
                 gameContract={this.props.gameContract}
                 linkContract={this.props.linkContract}
+                sessionId={this.handleDataFromChild}
               />
             ) : null}
           </Segment>

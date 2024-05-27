@@ -16,12 +16,13 @@ class App extends React.Component {
     this.state = {
       gameContract: null,
       linkContract: null,
+      sessionId: null,
     };
   }
 
   async componentDidMount() {
     let gameContract = new ethers.Contract(
-      "0x61C68fd54D8290b2a1a9A9f981623a3C016b7643",
+      "0x18Ec19cf612dded3dd6DB8DeD94Db6C5F653767e",
       gameAbi,
       signer
     );
@@ -33,6 +34,10 @@ class App extends React.Component {
     this.setState({ gameContract, linkContract });
   }
 
+  handleDataFromChild = (data) => {
+    this.setState({ sessionId: data });
+  };
+
   render() {
     return (
       <div className="app-container">
@@ -42,10 +47,14 @@ class App extends React.Component {
           <StartGame
             gameContract={this.state.gameContract}
             linkContract={this.state.linkContract}
+            sessionId={this.handleDataFromChild}
           />
+          {console.log(this.state.sessionId)}
+
           <Game
             gameContract={this.state.gameContract}
             linkContract={this.state.linkContract}
+            sessionId={this.state.sessionId}
           />
         </Container>
       </div>

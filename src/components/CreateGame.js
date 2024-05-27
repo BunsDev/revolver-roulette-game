@@ -12,17 +12,32 @@ class CreateGame extends React.Component {
   state = {
     wager: 0,
     timer: 86400,
+    sessionId: null,
   };
 
   createGame = async () => {
-    await this.props.linkContract.approve(
-      this.props.gameContract.address,
-      ethers.utils.parseUnits(this.state.wager)
-    );
-    const session = await this.props.gameContract.createGame(
+    if (this.state.wager > 0) {
+      await this.props.linkContract.approve(
+        this.props.gameContract.address,
+        ethers.utils.parseUnits(this.state.wager)
+      );
+    }
+    await this.props.gameContract.createGame(
       ethers.utils.parseUnits(this.state.wager),
       this.state.timer
     );
+
+    //wait for sessionId from chain
+    const accounts = await provider.send("eth_requestAccounts", []);
+    const filter = this.props.gameContract.filters.GameCreated(accounts[0]);
+    this.props.gameContract.on(filter, (player1, sessionId) => {
+      //send to StartGame then App for use in Game
+      this.setState({ sessionId });
+      this.props.sessionId(sessionId);
+    });
+    provider.on("error", (error) => {
+      console.error("Provider error:", error);
+    });
   };
 
   render() {
