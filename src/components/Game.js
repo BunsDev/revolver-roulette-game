@@ -1,4 +1,5 @@
 import "../css//App.css";
+import "../css/game.css";
 import React from "react";
 import gameAbi from "../ABIs/revolver";
 import { signer, provider } from "../web3";
@@ -18,7 +19,9 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      error: null,
+      error: "",
+      showError: false,
+      fadeOut: false,
       display: false,
       gameContract: null,
       linkContract: null,
@@ -41,7 +44,21 @@ class Game extends React.Component {
     } catch (error) {
       const errorMessage = error.message;
       const extractedReason = this.extractErrorReason(errorMessage);
-      this.setState({ error: extractedReason });
+      this.setState({
+        error: extractedReason,
+        showError: true,
+        fadeOut: false,
+      });
+
+      // Wait for 5 seconds before starting the fade-out animation
+      setTimeout(() => {
+        this.setState({ fadeOut: true });
+
+        // Remove error after the fade-out animation completes
+        setTimeout(() => {
+          this.setState({ showError: false });
+        }, 5000);
+      }, 5000);
     }
   };
 
@@ -51,7 +68,21 @@ class Game extends React.Component {
     } catch (error) {
       const errorMessage = error.message;
       const extractedReason = this.extractErrorReason(errorMessage);
-      this.setState({ error: extractedReason });
+      this.setState({
+        error: extractedReason,
+        showError: true,
+        fadeOut: false,
+      });
+
+      // Wait for 5 seconds before starting the fade-out animation
+      setTimeout(() => {
+        this.setState({ fadeOut: true });
+
+        // Remove error after the fade-out animation completes
+        setTimeout(() => {
+          this.setState({ showError: false });
+        }, 5000);
+      }, 5000);
     }
   };
 
@@ -195,7 +226,9 @@ class Game extends React.Component {
         <Container className="box" style={{ marginTop: "20px" }}>
           {this.displayGame()}
           <button onClick={() => this.getGameInfo()}>update</button>
-          <div style={{ color: "red" }}>{this.state.error}</div>
+          <div className={`error ${this.state.fadeOut ? "fade-out" : ""}`}>
+            {this.state.error}
+          </div>
         </Container>
       </div>
     );
