@@ -19,6 +19,7 @@ class Game extends React.Component {
     super(props);
     this.state = {
       error: null,
+      display: false,
       gameContract: null,
       linkContract: null,
       user: null,
@@ -26,6 +27,7 @@ class Game extends React.Component {
       player2: null,
       wager: 0,
       turn: "0x0",
+      winner: "0x0",
     };
   }
   extractErrorReason = (errorMessage) => {
@@ -44,11 +46,6 @@ class Game extends React.Component {
   };
 
   fireRevolver = async () => {
-    let lastRequestId = await this.props.gameContract.lastRequestIds(
-      this.props.sessionId,
-      this.state.player1
-    );
-    console.log(lastRequestId);
     try {
       await this.props.gameContract.fireRevolver(this.props.sessionId);
     } catch (error) {
@@ -81,12 +78,36 @@ class Game extends React.Component {
     this.setState({ player1: gameStruct[1] });
     this.setState({ player2: gameStruct[2] });
     this.setState({ turn: gameStruct[4] });
+    if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
+      this.setState({ winner: gameStruct[3] });
+    }
     console.log(gameStruct);
     await this.getWager();
     console.log("game updated");
   };
 
+  displayWinner = () => {
+    if (this.state.player1 == this.state.winner) {
+      return (
+        <div>
+          <h1>Player1 wins!</h1>
+        </div>
+      );
+    } else if (this.state.player2 == this.state.winner) {
+      return (
+        <div>
+          <h1>Player2 wins!</h1>
+        </div>
+      );
+    }
+  };
+
   displayGame = () => {
+    if (this.props.sessionId && !this.state.display) {
+      this.getGameInfo();
+      this.setState({ display: true });
+      this.createEventListeners();
+    }
     if (this.props.sessionId) {
       return (
         <Segment textAlign="center">
@@ -112,6 +133,8 @@ class Game extends React.Component {
               {console.log(this.props.sessionId)}
             </GridRow>
           </Grid>
+          <br />
+          {this.displayWinner()}
           <Button color="blue" onClick={this.spinCylinder}>
             Spin Cylinder!
           </Button>
@@ -122,6 +145,49 @@ class Game extends React.Component {
       );
     }
   };
+
+  async createEventListeners() {
+    const filterFire = this.props.gameContract.filters.RevolverFired(
+      null,
+      this.props.sessionId
+    );
+    const filterSpin = this.props.gameContract.filters.SpinCylinder(
+      this.props.sessionId
+    );
+    this.props.gameContract.on(filterSpin, async (player, sessionId) => {
+      console.log("cylinder spun: ", player, sessionId);
+      await this.getGameInfo();
+    });
+    this.props.gameContract.on(
+      filterFire,
+      async (player, sessionId, randomNumber) => {
+        console.log("revolver fired: ", player, sessionId, randomNumber);
+        await this.getGameInfo();
+      }
+    );
+    provider.on("error", (error) => {
+      console.error("Provider error:", error);
+    });
+  }
+  // async componentDidUpdate() {
+  //   if (this.state.sessionId) {
+  //     console.log("componentDidUpdate");
+  //     await this.getGameInfo();
+
+  //     const filter = this.props.gameContract.filters.RevolverFired(
+  //       this.state.sessionId
+  //     );
+  //     this.props.gameContract.on(
+  //       filter,
+  //       async (player, sessionId, randomNumber) => {
+  //         console.log(player, sessionId, randomNumber);
+  //       }
+  //     );
+  //     provider.on("error", (error) => {
+  //       console.error("Provider error:", error);
+  //     });
+  //   }
+  // }
 
   render() {
     return (
