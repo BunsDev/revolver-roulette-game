@@ -1,7 +1,6 @@
 import "../css//App.css";
 import "../css/game.css";
 import React from "react";
-import gameAbi from "../ABIs/revolver";
 import { signer, provider } from "../web3";
 import { ethers } from "ethers";
 import {
@@ -33,32 +32,31 @@ class Game extends React.Component {
       winner: "0x0",
     };
   }
-  extractErrorReason = (errorMessage) => {
+
+  displayError = (error) => {
+    const errorMessage = error.message;
     const reasonMatch = errorMessage.match(/reason="([^"]+)"/);
-    return reasonMatch ? reasonMatch[1] : "Unknown error";
+    const extractedReason = reasonMatch ? reasonMatch[1] : "Unknown error";
+    this.setState({
+      error: extractedReason,
+      showError: true,
+      fadeOut: false,
+    });
+
+    setTimeout(() => {
+      this.setState({ fadeOut: true });
+
+      setTimeout(() => {
+        this.setState({ showError: false });
+      }, 5000);
+    }, 5000);
   };
 
   spinCylinder = async () => {
     try {
       await this.props.gameContract.spinCylinder(this.props.sessionId);
     } catch (error) {
-      const errorMessage = error.message;
-      const extractedReason = this.extractErrorReason(errorMessage);
-      this.setState({
-        error: extractedReason,
-        showError: true,
-        fadeOut: false,
-      });
-
-      // Wait for 5 seconds before starting the fade-out animation
-      setTimeout(() => {
-        this.setState({ fadeOut: true });
-
-        // Remove error after the fade-out animation completes
-        setTimeout(() => {
-          this.setState({ showError: false });
-        }, 5000);
-      }, 5000);
+      this.displayError(error);
     }
   };
 
@@ -66,55 +64,45 @@ class Game extends React.Component {
     try {
       await this.props.gameContract.fireRevolver(this.props.sessionId);
     } catch (error) {
-      const errorMessage = error.message;
-      const extractedReason = this.extractErrorReason(errorMessage);
-      this.setState({
-        error: extractedReason,
-        showError: true,
-        fadeOut: false,
-      });
-
-      // Wait for 5 seconds before starting the fade-out animation
-      setTimeout(() => {
-        this.setState({ fadeOut: true });
-
-        // Remove error after the fade-out animation completes
-        setTimeout(() => {
-          this.setState({ showError: false });
-        }, 5000);
-      }, 5000);
+      this.displayError(error);
     }
   };
 
   getWager = async () => {
-    const accounts = await provider.send("eth_requestAccounts", []);
-    const wager = await this.props.gameContract.wagers(
-      this.props.sessionId,
-      accounts[0]
-    );
+    try {
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const wager = await this.props.gameContract.wagers(
+        this.props.sessionId,
+        accounts[0]
+      );
 
-    const wagerInWei = ethers.BigNumber.from(wager);
-    const wagerInEther = ethers.utils.formatEther(wagerInWei);
+      const wagerInWei = ethers.BigNumber.from(wager);
+      const wagerInEther = ethers.utils.formatEther(wagerInWei);
 
-    this.setState({ wager: wagerInEther });
-
-    return wager;
+      this.setState({ wager: wagerInEther });
+    } catch (error) {
+      this.displayError(error);
+    }
   };
 
   getGameInfo = async () => {
-    const gameStruct = await this.props.gameContract.gameSessions(
-      this.props.sessionId
-    );
-    console.log(gameStruct[1]);
-    this.setState({ player1: gameStruct[1] });
-    this.setState({ player2: gameStruct[2] });
-    this.setState({ turn: gameStruct[4] });
-    if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
-      this.setState({ winner: gameStruct[3] });
+    try {
+      const gameStruct = await this.props.gameContract.gameSessions(
+        this.props.sessionId
+      );
+      console.log(gameStruct[1]);
+      this.setState({ player1: gameStruct[1] });
+      this.setState({ player2: gameStruct[2] });
+      this.setState({ turn: gameStruct[4] });
+      if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
+        this.setState({ winner: gameStruct[3] });
+      }
+      console.log(gameStruct);
+      await this.getWager();
+      console.log("game updated");
+    } catch (error) {
+      this.displayError(error);
     }
-    console.log(gameStruct);
-    await this.getWager();
-    console.log("game updated");
   };
 
   displayWinner = () => {
@@ -200,32 +188,13 @@ class Game extends React.Component {
       console.error("Provider error:", error);
     });
   }
-  // async componentDidUpdate() {
-  //   if (this.state.sessionId) {
-  //     console.log("componentDidUpdate");
-  //     await this.getGameInfo();
-
-  //     const filter = this.props.gameContract.filters.RevolverFired(
-  //       this.state.sessionId
-  //     );
-  //     this.props.gameContract.on(
-  //       filter,
-  //       async (player, sessionId, randomNumber) => {
-  //         console.log(player, sessionId, randomNumber);
-  //       }
-  //     );
-  //     provider.on("error", (error) => {
-  //       console.error("Provider error:", error);
-  //     });
-  //   }
-  // }
 
   render() {
     return (
       <div>
         <Container className="box" style={{ marginTop: "20px" }}>
           {this.displayGame()}
-          <button onClick={() => this.getGameInfo()}>update</button>
+          <button onClick={() => this.getGameInfo()}>refresh</button>
           <div className={`error ${this.state.fadeOut ? "fade-out" : ""}`}>
             {this.state.error}
           </div>
