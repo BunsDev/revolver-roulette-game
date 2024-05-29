@@ -18,6 +18,8 @@ contract Revolver is VRFConsumerBaseV2Plus {
 
     event GameCreated(address indexed player1, bytes32 indexed sessionId);
 
+    event GameJoined(bytes32 indexed sessionId);
+
     event RevolverFired(address indexed player, bytes32 indexed sessionId, uint256 indexed randomNumber);
 
     event SpinCylinder(bytes32 indexed sessionId, address player);
@@ -122,6 +124,8 @@ contract Revolver is VRFConsumerBaseV2Plus {
         if (gs.wager > 0) {
             setWager(sessionId, gs.wager);
         }
+
+        emit GameJoined(sessionId);
         
     }
 
@@ -147,8 +151,11 @@ contract Revolver is VRFConsumerBaseV2Plus {
         GameSession memory gs = gameSessions[sessionId];
         require(msg.sender == gs.player1 || msg.sender == gs.player2, "you're not a player in this game!");
         require(gs.lastSpinner == address(0), "game has started!");
+
+        gameSessions[sessionId].pot -= gs.wager;
         
         require(linkToken.transfer(msg.sender, gs.wager), "withdraw failed!");
+
 
 
     }
@@ -237,6 +244,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
         }
         gameSessions[sessionId].roundCount++;
 
+        //reset turn timer
         gameSessions[sessionId].timestamp = block.timestamp;
 
     }

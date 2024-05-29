@@ -22,7 +22,7 @@ class App extends React.Component {
 
   async componentDidMount() {
     let gameContract = new ethers.Contract(
-      "0x18Ec19cf612dded3dd6DB8DeD94Db6C5F653767e",
+      "0x056545aaab7817fe175f22f2aB49DBcA47E140e3",
       gameAbi,
       signer
     );

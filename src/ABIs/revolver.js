@@ -129,6 +129,19 @@ const abi = [
     inputs: [
       {
         indexed: true,
+        internalType: "bytes32",
+        name: "sessionId",
+        type: "bytes32",
+      },
+    ],
+    name: "GameJoined",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: "address",
         name: "from",
         type: "address",

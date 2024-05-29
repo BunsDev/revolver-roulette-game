@@ -6,17 +6,16 @@ import { ethers } from "ethers";
 import {
   Container,
   Button,
-  Input,
   Segment,
   GridRow,
   GridColumn,
   Grid,
-  Image,
 } from "semantic-ui-react";
 
 class Game extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       error: "",
       showError: false,
@@ -27,9 +26,11 @@ class Game extends React.Component {
       user: null,
       player1: null,
       player2: null,
-      wager: 0,
       turn: "0x0",
       winner: "0x0",
+      wagerPlayer1: 0,
+      wagerPlayer2: 0,
+      sessionId: null,
     };
   }
 
@@ -68,37 +69,30 @@ class Game extends React.Component {
     }
   };
 
-  getWager = async () => {
-    try {
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const wager = await this.props.gameContract.wagers(
-        this.props.sessionId,
-        accounts[0]
-      );
-
-      const wagerInWei = ethers.BigNumber.from(wager);
-      const wagerInEther = ethers.utils.formatEther(wagerInWei);
-
-      this.setState({ wager: wagerInEther });
-    } catch (error) {
-      this.displayError(error);
-    }
-  };
-
   getGameInfo = async () => {
     try {
       const gameStruct = await this.props.gameContract.gameSessions(
         this.props.sessionId
       );
-      console.log(gameStruct[1]);
+
+      const wagerPlayer1 = await this.props.gameContract.wagers(
+        this.props.sessionId,
+        gameStruct[1]
+      );
+      const wagerPlayer2 = await this.props.gameContract.wagers(
+        this.props.sessionId,
+        gameStruct[2]
+      );
+
       this.setState({ player1: gameStruct[1] });
       this.setState({ player2: gameStruct[2] });
       this.setState({ turn: gameStruct[4] });
+      this.setState({ wagerPlayer1: ethers.utils.formatEther(wagerPlayer1) });
+      this.setState({ wagerPlayer2: ethers.utils.formatEther(wagerPlayer2) });
       if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
         this.setState({ winner: gameStruct[3] });
       }
       console.log(gameStruct);
-      await this.getWager();
       console.log("game updated");
     } catch (error) {
       this.displayError(error);
@@ -121,8 +115,23 @@ class Game extends React.Component {
     }
   };
 
+  async componentDidUpdate() {
+    if (this.props.sessionId !== this.state.sessionId) {
+      console.log(
+        "SESSION ID CHANGED: PROPS: ",
+        this.props.sessionId,
+        "STATE: ",
+        this.state.sessionId
+      );
+    }
+  }
+
   displayGame = () => {
-    if (this.props.sessionId && !this.state.display) {
+    if (
+      (this.props.sessionId && !this.state.display) ||
+      this.props.sessionId !== this.state.sessionId
+    ) {
+      this.setState({ sessionId: this.props.sessionId });
       this.getGameInfo();
       this.setState({ display: true });
       this.createEventListeners();
@@ -132,7 +141,9 @@ class Game extends React.Component {
         <Segment textAlign="center">
           {this.props.sessionId}
           <br />
-          {`Pot: ${this.state.wager} LINK`}
+          {`Pot: ${
+            Number(this.state.wagerPlayer1) + Number(this.state.wagerPlayer2)
+          } LINK`}
           <Grid divided="vertically">
             <GridRow columns={2}>
               <GridColumn
@@ -173,6 +184,11 @@ class Game extends React.Component {
     const filterSpin = this.props.gameContract.filters.SpinCylinder(
       this.props.sessionId
     );
+
+    const filterJoined = this.props.gameContract.filters.GameJoined(
+      this.props.sessionId
+    );
+
     this.props.gameContract.on(filterSpin, async (player, sessionId) => {
       console.log("cylinder spun: ", player, sessionId);
       await this.getGameInfo();
@@ -184,6 +200,11 @@ class Game extends React.Component {
         await this.getGameInfo();
       }
     );
+
+    this.props.gameContract.on(filterJoined, async (sessionId) => {
+      console.log("player 2 joined: ", sessionId);
+      await this.getGameInfo();
+    });
     provider.on("error", (error) => {
       console.error("Provider error:", error);
     });

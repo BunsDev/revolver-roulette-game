@@ -8,22 +8,9 @@ import { Container, Button, Input, Segment } from "semantic-ui-react";
 class JoinGame extends React.Component {
   state = {
     sessionId: null,
-    wager: null,
+    wager: 0,
     player1: null,
     player2: "0x0000000000000000000000000000000000000000",
-  };
-
-  getWager = async () => {
-    const accounts = await provider.send("eth_requestAccounts", []);
-    const wager = await this.props.gameContract.wagers(
-      this.state.sessionId,
-      accounts[0]
-    );
-    const wagerInWei = ethers.BigNumber.from(wager);
-    const wagerInEther = ethers.utils.formatEther(wagerInWei);
-
-    this.setState({ wager: wagerInEther });
-    return wager;
   };
 
   getGameInfo = async () => {
@@ -33,10 +20,13 @@ class JoinGame extends React.Component {
     const gameStruct = await this.props.gameContract.gameSessions(
       this.state.sessionId
     );
+    const wager = gameStruct[7];
+    const wagerInWei = ethers.BigNumber.from(wager);
+    const wagerInEther = ethers.utils.formatEther(wagerInWei);
 
     this.setState({ player1: gameStruct[1] });
     this.setState({ player2: gameStruct[2] });
-    await this.getWager();
+    this.setState({ wager: wagerInEther });
 
     this.props.sessionId(this.state.sessionId);
   };
@@ -49,30 +39,31 @@ class JoinGame extends React.Component {
       console.log("Game Full!");
       return;
     }
-    const wager = await this.getWager();
+    const wager = gameStruct[7];
     if (wager > 0) {
-      await this.props.linkContract.approve(
-        this.props.gameContract.address,
-        wager
-      );
+      try {
+        const gasEstimate = await this.props.linkContract.estimateGas.approve(
+          this.props.gameContract.address,
+          ethers.utils.parseUnits(this.state.wager)
+        );
+        console.log("Estimated gas:", gasEstimate.toString());
+
+        const tx = await this.props.linkContract.approve(
+          this.props.gameContract.address,
+          ethers.utils.parseUnits(this.state.wager),
+          { gasLimit: gasEstimate }
+        );
+        await tx.wait();
+        console.log("Transaction successful");
+      } catch (error) {
+        console.error("Error approving tokens:", error);
+      }
     }
 
     await this.props.gameContract.joinGame(this.state.sessionId);
   };
 
-  wagerDisplay = () => {
-    if (
-      this.state.wager &&
-      this.state.player2 !== "0x0000000000000000000000000000000000000000"
-    ) {
-      return <div>Wager: {this.state.wager / 2} LINK</div>;
-    } else if (
-      this.state.wager &&
-      this.state.player2 === "0x0000000000000000000000000000000000000000"
-    ) {
-      return <div>Wager: {Math.trunc(this.state.wager)} LINK</div>;
-    }
-  };
+  wagerDisplay = () => {};
 
   render() {
     return (
@@ -90,7 +81,7 @@ class JoinGame extends React.Component {
           </Button>
           <br />
           <br />
-          {this.wagerDisplay()}
+          <div>Wager:{Math.trunc(this.state.wager)} LINK</div>
           {this.state.player1 ? `Player1: ${this.state.player1}` : null}
           <br />
           {this.state.player2 !== "0x0000000000000000000000000000000000000000"

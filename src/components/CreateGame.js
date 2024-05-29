@@ -17,10 +17,23 @@ class CreateGame extends React.Component {
 
   createGame = async () => {
     if (this.state.wager > 0) {
-      await this.props.linkContract.approve(
-        this.props.gameContract.address,
-        ethers.utils.parseUnits(this.state.wager)
-      );
+      try {
+        const gasEstimate = await this.props.linkContract.estimateGas.approve(
+          this.props.gameContract.address,
+          ethers.utils.parseUnits(this.state.wager)
+        );
+        console.log("Estimated gas:", gasEstimate.toString());
+
+        const tx = await this.props.linkContract.approve(
+          this.props.gameContract.address,
+          ethers.utils.parseUnits(this.state.wager),
+          { gasLimit: gasEstimate }
+        );
+        await tx.wait();
+        console.log("Transaction successful");
+      } catch (error) {
+        console.error("Error approving tokens:", error);
+      }
     }
     await this.props.gameContract.createGame(
       ethers.utils.parseUnits(this.state.wager),
