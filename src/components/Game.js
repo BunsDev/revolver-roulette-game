@@ -28,6 +28,7 @@ class Game extends React.Component {
       player2: null,
       turn: "0x0",
       winner: "0x0",
+      pot: 0,
       wagerPlayer1: 0,
       wagerPlayer2: 0,
       sessionId: null,
@@ -69,6 +70,14 @@ class Game extends React.Component {
     }
   };
 
+  withdrawPot = async () => {
+    try {
+      await this.props.gameContract.withdrawPot(this.props.sessionId);
+    } catch (error) {
+      this.displayError(error);
+    }
+  };
+
   getGameInfo = async () => {
     try {
       const gameStruct = await this.props.gameContract.gameSessions(
@@ -87,6 +96,7 @@ class Game extends React.Component {
       this.setState({ player1: gameStruct[1] });
       this.setState({ player2: gameStruct[2] });
       this.setState({ turn: gameStruct[4] });
+      this.setState({ pot: ethers.utils.formatEther(gameStruct[8]) });
       this.setState({ wagerPlayer1: ethers.utils.formatEther(wagerPlayer1) });
       this.setState({ wagerPlayer2: ethers.utils.formatEther(wagerPlayer2) });
       if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
@@ -100,30 +110,31 @@ class Game extends React.Component {
   };
 
   displayWinner = () => {
-    if (this.state.player1 == this.state.winner) {
-      return (
-        <div>
-          <h1>Player1 wins!</h1>
-        </div>
-      );
-    } else if (this.state.player2 == this.state.winner) {
-      return (
-        <div>
-          <h1>Player2 wins!</h1>
-        </div>
-      );
+    console.log(this.state.winner, this.state.user);
+    console.log(typeof this.state.winner, typeof this.state.user);
+
+    let winnerMessage = null;
+    if (this.state.player1 === this.state.winner) {
+      winnerMessage = <h1>Player1 wins!</h1>;
+    } else if (this.state.player2 === this.state.winner) {
+      winnerMessage = <h1>Player2 wins!</h1>;
     }
+
+    return (
+      <div>
+        {winnerMessage}
+        {this.state.user === this.state.winner && (
+          <Button color="blue" onClick={this.withdrawPot}>
+            Withdraw Pot!
+          </Button>
+        )}
+      </div>
+    );
   };
 
-  async componentDidUpdate() {
-    if (this.props.sessionId !== this.state.sessionId) {
-      console.log(
-        "SESSION ID CHANGED: PROPS: ",
-        this.props.sessionId,
-        "STATE: ",
-        this.state.sessionId
-      );
-    }
+  async componentDidMount() {
+    const user = await signer.getAddress();
+    this.setState({ user });
   }
 
   displayGame = () => {
@@ -141,9 +152,7 @@ class Game extends React.Component {
         <Segment textAlign="center">
           {this.props.sessionId}
           <br />
-          {`Pot: ${
-            Number(this.state.wagerPlayer1) + Number(this.state.wagerPlayer2)
-          } LINK`}
+          {`Pot: ${Number(this.state.pot)} LINK`}
           <Grid divided="vertically">
             <GridRow columns={2}>
               <GridColumn
