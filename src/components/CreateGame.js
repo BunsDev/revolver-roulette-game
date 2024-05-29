@@ -22,7 +22,6 @@ class CreateGame extends React.Component {
           this.props.gameContract.address,
           ethers.utils.parseUnits(this.state.wager)
         );
-        console.log("Estimated gas:", gasEstimate.toString());
 
         const tx = await this.props.linkContract.approve(
           this.props.gameContract.address,
@@ -30,15 +29,18 @@ class CreateGame extends React.Component {
           { gasLimit: gasEstimate }
         );
         await tx.wait();
-        console.log("Transaction successful");
       } catch (error) {
         console.error("Error approving tokens:", error);
       }
     }
-    await this.props.gameContract.createGame(
-      ethers.utils.parseUnits(this.state.wager),
-      this.state.timer
-    );
+    try {
+      await this.props.gameContract.createGame(
+        ethers.utils.parseUnits(this.state.wager),
+        this.state.timer
+      );
+    } catch (error) {
+      console.error("Error creating game:", error);
+    }
 
     //wait for sessionId from chain
     const accounts = await provider.send("eth_requestAccounts", []);

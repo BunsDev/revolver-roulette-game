@@ -1,29 +1,31 @@
 import React from "react";
 import { signer, provider } from "../web3";
 import "../css/header.css";
-
 import { Container, Header, Menu, Segment, Icon } from "semantic-ui-react";
+const ethers = require("ethers");
+
 class NavBar extends React.Component {
   state = {
     account: null,
     connectedIcon: <Icon name="cancel" color="red" />,
     networkIcon: <Icon name="cancel" color="red" />,
+    network: null,
   };
 
   async componentDidMount() {
-    //check if wallet is connected
-    const accounts = await provider.send("eth_requestAccounts", []);
-    console.log(accounts[0]);
-    this.setState({ account: accounts[0] });
-    if (accounts.length > 0) {
-      this.setState({ connectedIcon: <Icon name="check" color="green" /> });
-    }
-    //get network
-    const networkId = await provider.getNetwork();
-    console.log(networkId.chainId);
-    if (networkId.chainId === 43113 && window.ethereum) {
-      this.setState({ networkIcon: <Icon name="check" color="green" /> });
-    }
+    window.ethereum.on("connect", async () => {
+      const networkId = await provider.getNetwork();
+      this.setState({ network: networkId.chainId });
+      console.log(networkId.chainId);
+      window.ethereum.removeListener("connect", () => {
+        console.log("Listener removed");
+      });
+    });
+
+    window.ethereum.on("chainChanged", async () => {
+      const networkId = await provider.getNetwork();
+      this.setState({ network: networkId.chainId });
+    });
   }
 
   render() {
@@ -38,11 +40,11 @@ class NavBar extends React.Component {
                   marginTop: "15px",
                   display: "inline-flex",
                 }}
-                className="banner chainlinkFont"
+                className="banner "
               ></div>
             </Header>
             <div
-              className="chainlinkFont"
+              className=""
               style={{
                 minWidth: "25%",
                 float: "right",
@@ -50,13 +52,21 @@ class NavBar extends React.Component {
               }}
             >
               Wallet:
-              {this.state.connectedIcon}
+              {this.props.account ? (
+                <Icon name="check" color="green" />
+              ) : (
+                <Icon name="cancel" color="red" />
+              )}
               <br />
               Network:
-              {this.state.networkIcon}
+              {this.state.network === 43113 && window.ethereum ? (
+                <Icon name="check" color="green" />
+              ) : (
+                <Icon name="cancel" color="red" />
+              )}
             </div>
 
-            <Menu style={{ fontFamily: "chainlinkFont" }} fluid widths={4}>
+            <Menu fluid widths={4}>
               <Menu.Item className="menu-button">
                 <a style={{ display: "block", color: "black" }} href="/">
                   <span className="span-button"></span>
@@ -83,6 +93,7 @@ class NavBar extends React.Component {
               </Menu.Item>
             </Menu>
           </Segment>
+          {this.state.error}
         </Container>
       </>
     );

@@ -17,10 +17,20 @@ class App extends React.Component {
       gameContract: null,
       linkContract: null,
       sessionId: null,
+      account: undefined,
     };
   }
 
   async componentDidMount() {
+    try {
+      //check if wallet is connected
+      const accounts = await provider.send("eth_requestAccounts", []);
+      console.log(accounts[0]);
+      this.setState({ account: ethers.utils.getAddress(accounts[0]) });
+    } catch (error) {
+      console.error(error.message);
+    }
+
     let gameContract = new ethers.Contract(
       "0x056545aaab7817fe175f22f2aB49DBcA47E140e3",
       gameAbi,
@@ -42,7 +52,7 @@ class App extends React.Component {
     return (
       <div className="app-container">
         <Container className="box">
-          <Header />
+          <Header account={this.state.account} />
           {console.log(this.state.gameContract)}
           <StartGame
             gameContract={this.state.gameContract}
@@ -55,6 +65,7 @@ class App extends React.Component {
             gameContract={this.state.gameContract}
             linkContract={this.state.linkContract}
             sessionId={this.state.sessionId}
+            account={this.state.account}
           />
         </Container>
       </div>

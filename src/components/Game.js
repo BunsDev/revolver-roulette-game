@@ -27,7 +27,7 @@ class Game extends React.Component {
       player1: null,
       player2: null,
       turn: "0x0",
-      winner: "0x0",
+      winner: "0xf71A5fBD7c0bF8E16a7975dD86596a83A6259E2e",
       pot: 0,
       wagerPlayer1: 0,
       wagerPlayer2: 0,
@@ -96,7 +96,7 @@ class Game extends React.Component {
       this.setState({ player1: gameStruct[1] });
       this.setState({ player2: gameStruct[2] });
       this.setState({ turn: gameStruct[4] });
-      this.setState({ pot: ethers.utils.formatEther(gameStruct[8]) });
+      this.setState({ pot: gameStruct[8] });
       this.setState({ wagerPlayer1: ethers.utils.formatEther(wagerPlayer1) });
       this.setState({ wagerPlayer2: ethers.utils.formatEther(wagerPlayer2) });
       if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
@@ -110,8 +110,8 @@ class Game extends React.Component {
   };
 
   displayWinner = () => {
-    console.log(this.state.winner, this.state.user);
-    console.log(typeof this.state.winner, typeof this.state.user);
+    console.log("Winner:", this.state.winner, "Account:", this.props.account);
+    console.log("Types:", typeof this.state.winner, typeof this.props.account);
 
     let winnerMessage = null;
     if (this.state.player1 === this.state.winner) {
@@ -123,19 +123,24 @@ class Game extends React.Component {
     return (
       <div>
         {winnerMessage}
-        {this.state.user === this.state.winner && (
+        {this.props.account === this.state.winner ? (
           <Button color="blue" onClick={this.withdrawPot}>
             Withdraw Pot!
           </Button>
-        )}
+        ) : null}
       </div>
     );
   };
 
-  async componentDidMount() {
-    const user = await signer.getAddress();
-    this.setState({ user });
-  }
+  // async componentDidMount() {
+  //   console.log("game mounted");
+  //   try {
+  //     const accounts = await provider.send("eth_requestAccounts", []);
+  //     console.log("from game: ", accounts[0]);
+  //   } catch (error) {
+  //     console.error(error.message);
+  //   }
+  // }
 
   displayGame = () => {
     if (
