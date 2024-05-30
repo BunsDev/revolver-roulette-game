@@ -20,7 +20,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
 
     event GameJoined(bytes32 indexed sessionId);
 
-    event RevolverFired(address indexed player, bytes32 indexed sessionId, uint256 indexed randomNumber);
+    event RevolverFired( bytes32 indexed sessionId, address indexed player, uint256 indexed randomNumber);
 
     event SpinCylinder(bytes32 indexed sessionId, address player);
 
@@ -218,10 +218,12 @@ contract Revolver is VRFConsumerBaseV2Plus {
         RequestStatus memory request = s_requests[requestId];
 
         require(gs.lastSpinner == msg.sender, "not your turn to fire!");
+        require(gs.winner == address(0), "game over!");
+
         require(request.fulfilled, "VRF request not fulfilled!");
 
         uint256 randomNumber = request.randomWords[0] % 6;
-        emit RevolverFired(msg.sender, sessionId, randomNumber);
+        emit RevolverFired(sessionId, msg.sender , randomNumber);
 
         //if bullet is fired
         if (randomNumber == 3) {

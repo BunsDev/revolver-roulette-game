@@ -81,7 +81,9 @@ class JoinGame extends React.Component {
           </Button>
           <br />
           <br />
-          <div>Wager:{Math.trunc(this.state.wager)} LINK</div>
+          {this.state.wager
+            ? `Wager: ${Math.trunc(this.state.wager)} LINK`
+            : null}
           {this.state.player1 ? `Player1: ${this.state.player1}` : null}
           <br />
           {this.state.player2 !== "0x0000000000000000000000000000000000000000"

@@ -2,7 +2,7 @@ import "../css//App.css";
 import "../css/game.css";
 import React from "react";
 import { signer, provider } from "../web3";
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 import {
   Container,
   Button,
@@ -21,17 +21,18 @@ class Game extends React.Component {
       showError: false,
       fadeOut: false,
       display: false,
-      gameContract: null,
-      linkContract: null,
-      user: null,
-      player1: null,
-      player2: null,
+
+      user: undefined,
+      player1: undefined,
+      player2: undefined,
       turn: "0x0",
-      winner: "0xf71A5fBD7c0bF8E16a7975dD86596a83A6259E2e",
+      winner: "0x0000000000000000000000000000000000000000",
       pot: 0,
       wagerPlayer1: 0,
       wagerPlayer2: 0,
-      sessionId: null,
+      sessionId: undefined,
+      player1Status: null,
+      player2Status: null,
     };
   }
 
@@ -52,6 +53,17 @@ class Game extends React.Component {
         this.setState({ showError: false });
       }, 5000);
     }, 5000);
+  };
+
+  displayTurn = () => {
+    if (this.state.winner !== "0x0000000000000000000000000000000000000000") {
+      return <div>Game Over!</div>;
+    }
+    if (this.state.turn === this.props.account) {
+      return <div style={{ color: "green" }}>Your turn!</div>;
+    } else {
+      return <div>Waiting for opponent...</div>;
+    }
   };
 
   spinCylinder = async () => {
@@ -79,44 +91,46 @@ class Game extends React.Component {
   };
 
   getGameInfo = async () => {
-    try {
-      const gameStruct = await this.props.gameContract.gameSessions(
-        this.props.sessionId
-      );
+    if (this.props.sessionId) {
+      try {
+        const gameStruct = await this.props.gameContract.gameSessions(
+          this.props.sessionId
+        );
 
-      const wagerPlayer1 = await this.props.gameContract.wagers(
-        this.props.sessionId,
-        gameStruct[1]
-      );
-      const wagerPlayer2 = await this.props.gameContract.wagers(
-        this.props.sessionId,
-        gameStruct[2]
-      );
+        const wagerPlayer1 = await this.props.gameContract.wagers(
+          this.props.sessionId,
+          gameStruct[1]
+        );
+        const wagerPlayer2 = await this.props.gameContract.wagers(
+          this.props.sessionId,
+          gameStruct[2]
+        );
 
-      this.setState({ player1: gameStruct[1] });
-      this.setState({ player2: gameStruct[2] });
-      this.setState({ turn: gameStruct[4] });
-      this.setState({ pot: gameStruct[8] });
-      this.setState({ wagerPlayer1: ethers.utils.formatEther(wagerPlayer1) });
-      this.setState({ wagerPlayer2: ethers.utils.formatEther(wagerPlayer2) });
-      if (gameStruct[3] != "0x0000000000000000000000000000000000000000") {
+        this.setState({ player1: gameStruct[1] });
+        this.setState({ player2: gameStruct[2] });
+        this.setState({ turn: gameStruct[4] });
+        this.setState({ pot: ethers.utils.formatEther(gameStruct[8]) });
+        this.setState({ wagerPlayer1: ethers.utils.formatEther(wagerPlayer1) });
+        this.setState({ wagerPlayer2: ethers.utils.formatEther(wagerPlayer2) });
+
         this.setState({ winner: gameStruct[3] });
+
+        console.log(gameStruct);
+        console.log("game updated");
+      } catch (error) {
+        this.displayError(error);
       }
-      console.log(gameStruct);
-      console.log("game updated");
-    } catch (error) {
-      this.displayError(error);
     }
   };
 
   displayWinner = () => {
-    console.log("Winner:", this.state.winner, "Account:", this.props.account);
-    console.log("Types:", typeof this.state.winner, typeof this.props.account);
-
     let winnerMessage = null;
     if (this.state.player1 === this.state.winner) {
       winnerMessage = <h1>Player1 wins!</h1>;
-    } else if (this.state.player2 === this.state.winner) {
+    } else if (
+      this.state.player2 === this.state.winner &&
+      this.state.player2 !== "0x0000000000000000000000000000000000000000"
+    ) {
       winnerMessage = <h1>Player2 wins!</h1>;
     }
 
@@ -124,23 +138,17 @@ class Game extends React.Component {
       <div>
         {winnerMessage}
         {this.props.account === this.state.winner ? (
-          <Button color="blue" onClick={this.withdrawPot}>
+          <Button
+            style={{ marginBottom: "3px" }}
+            color="blue"
+            onClick={this.withdrawPot}
+          >
             Withdraw Pot!
           </Button>
         ) : null}
       </div>
     );
   };
-
-  // async componentDidMount() {
-  //   console.log("game mounted");
-  //   try {
-  //     const accounts = await provider.send("eth_requestAccounts", []);
-  //     console.log("from game: ", accounts[0]);
-  //   } catch (error) {
-  //     console.error(error.message);
-  //   }
-  // }
 
   displayGame = () => {
     if (
@@ -154,74 +162,110 @@ class Game extends React.Component {
     }
     if (this.props.sessionId) {
       return (
-        <Segment textAlign="center">
-          {this.props.sessionId}
-          <br />
-          {`Pot: ${Number(this.state.pot)} LINK`}
+        <Segment>
+          <div style={{ textAlign: "center" }}>
+            {" "}
+            {this.props.sessionId}
+            <br />
+            {`Pot: ${Number(this.state.pot)} LINK`}
+            {this.displayTurn()}
+          </div>
+
           <Grid divided="vertically">
             <GridRow columns={2}>
-              <GridColumn
-                style={
-                  this.state.turn == this.state.player1
-                    ? { color: "green" }
-                    : {}
-                }
-              >{`Player1: ${this.state.player1}`}</GridColumn>
-              <GridColumn
-                style={
-                  this.state.turn == this.state.player2
-                    ? { color: "green" }
-                    : {}
-                }
-              >{`Player2: ${this.state.player2}`}</GridColumn>
+              <GridColumn>
+                <div>Player1: {this.state.player1}</div>
+                <div>Status: {this.state.player1Status}</div>
+              </GridColumn>
+              <GridColumn>
+                <div>Player2: {this.state.player2}</div>
+                <div>Status: {this.state.player2Status}</div>
+              </GridColumn>
               {console.log(this.props.sessionId)}
             </GridRow>
           </Grid>
           <br />
-          {this.displayWinner()}
-          <Button color="blue" onClick={this.spinCylinder}>
-            Spin Cylinder!
-          </Button>
-          <Button color="blue" onClick={this.fireRevolver}>
-            Fire!
-          </Button>
+          <div style={{ textAlign: "center" }}>
+            {this.displayWinner()}
+            <Button color="blue" onClick={this.spinCylinder}>
+              Spin Cylinder!
+            </Button>
+            <Button color="blue" onClick={this.fireRevolver}>
+              Fire!
+            </Button>
+          </div>
         </Segment>
       );
     }
   };
 
   async createEventListeners() {
-    const filterFire = this.props.gameContract.filters.RevolverFired(
-      null,
-      this.props.sessionId
-    );
-    const filterSpin = this.props.gameContract.filters.SpinCylinder(
-      this.props.sessionId
-    );
+    if (this.props.sessionId) {
+      const filterFire = this.props.gameContract.filters.RevolverFired(
+        this.props.sessionId
+      );
+      const filterSpin = this.props.gameContract.filters.SpinCylinder(
+        this.props.sessionId
+      );
 
-    const filterJoined = this.props.gameContract.filters.GameJoined(
-      this.props.sessionId
-    );
+      const filterJoined = this.props.gameContract.filters.GameJoined(
+        this.props.sessionId
+      );
 
-    this.props.gameContract.on(filterSpin, async (player, sessionId) => {
-      console.log("cylinder spun: ", player, sessionId);
-      await this.getGameInfo();
-    });
-    this.props.gameContract.on(
-      filterFire,
-      async (player, sessionId, randomNumber) => {
-        console.log("revolver fired: ", player, sessionId, randomNumber);
+      this.props.gameContract.on(filterSpin, async (sessionId, player) => {
+        console.log("cylinder spun: ", player, sessionId);
+
+        if (ethers.utils.getAddress(player) === this.state.player1) {
+          this.setState({ player1Status: "Cylinder Spun, waiting to fire..." });
+        } else if (ethers.utils.getAddress(player) === this.state.player2) {
+          this.setState({ player2Status: "Cylinder Spun, waiting to fire..." });
+        }
+
         await this.getGameInfo();
-      }
-    );
+      });
+      this.props.gameContract.on(
+        filterFire,
+        async (player, sessionId, randomNumber) => {
+          console.log(
+            "revolver fired: ",
+            player,
+            sessionId,
+            Number(randomNumber._hex)
+          );
 
-    this.props.gameContract.on(filterJoined, async (sessionId) => {
-      console.log("player 2 joined: ", sessionId);
-      await this.getGameInfo();
-    });
-    provider.on("error", (error) => {
-      console.error("Provider error:", error);
-    });
+          if (ethers.utils.getAddress(player) === this.state.player1) {
+            this.setState({
+              player1Status: `Revolver Fired: ${
+                Number(randomNumber._hex) == 3 ? (
+                  <span style={{ color: "red" }}>Bang!</span>
+                ) : (
+                  "Click..."
+                )
+              }`,
+            });
+          } else if (ethers.utils.getAddress(player) === this.state.player2) {
+            this.setState({
+              player2Status: `Revolver Fired: ${
+                Number(randomNumber._hex) == 3 ? (
+                  <span style={{ color: "red" }}>Bang!</span>
+                ) : (
+                  "Click..."
+                )
+              }`,
+            });
+          }
+          await this.getGameInfo();
+        }
+      );
+
+      this.props.gameContract.on(filterJoined, async (sessionId) => {
+        console.log("player 2 joined: ", sessionId);
+        await this.getGameInfo();
+      });
+      provider.on("error", (error) => {
+        console.error("Provider error:", error);
+      });
+    }
   }
 
   render() {

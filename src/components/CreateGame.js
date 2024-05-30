@@ -16,6 +16,18 @@ class CreateGame extends React.Component {
   };
 
   createGame = async () => {
+    //listen for GameCreated event
+    const accounts = await provider.send("eth_requestAccounts", []);
+    console.log("Accounts:", accounts[0]);
+    const filter = this.props.gameContract.filters.GameCreated(accounts[0]);
+    this.props.gameContract.on(filter, (player1, sessionId) => {
+      //send to StartGame then App for use in Game
+      this.setState({ sessionId });
+      this.props.sessionId(sessionId);
+    });
+    provider.on("error", (error) => {
+      console.error("Provider error:", error);
+    });
     if (this.state.wager > 0) {
       try {
         const gasEstimate = await this.props.linkContract.estimateGas.approve(
@@ -41,18 +53,6 @@ class CreateGame extends React.Component {
     } catch (error) {
       console.error("Error creating game:", error);
     }
-
-    //wait for sessionId from chain
-    const accounts = await provider.send("eth_requestAccounts", []);
-    const filter = this.props.gameContract.filters.GameCreated(accounts[0]);
-    this.props.gameContract.on(filter, (player1, sessionId) => {
-      //send to StartGame then App for use in Game
-      this.setState({ sessionId });
-      this.props.sessionId(sessionId);
-    });
-    provider.on("error", (error) => {
-      console.error("Provider error:", error);
-    });
   };
 
   render() {

@@ -218,15 +218,15 @@ const abi = [
     inputs: [
       {
         indexed: true,
-        internalType: "address",
-        name: "player",
-        type: "address",
-      },
-      {
-        indexed: true,
         internalType: "bytes32",
         name: "sessionId",
         type: "bytes32",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "player",
+        type: "address",
       },
       {
         indexed: true,
