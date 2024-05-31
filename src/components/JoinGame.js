@@ -36,7 +36,6 @@ class JoinGame extends React.Component {
       this.state.sessionId
     );
     if (gameStruct[2] !== "0x0000000000000000000000000000000000000000") {
-      console.log("Game Full!");
       return;
     }
     const wager = gameStruct[7];
@@ -46,7 +45,6 @@ class JoinGame extends React.Component {
           this.props.gameContract.address,
           ethers.utils.parseUnits(this.state.wager)
         );
-        console.log("Estimated gas:", gasEstimate.toString());
 
         const tx = await this.props.linkContract.approve(
           this.props.gameContract.address,
@@ -84,6 +82,7 @@ class JoinGame extends React.Component {
           {this.state.wager
             ? `Wager: ${Math.trunc(this.state.wager)} LINK`
             : null}
+          <br />
           {this.state.player1 ? `Player1: ${this.state.player1}` : null}
           <br />
           {this.state.player2 !== "0x0000000000000000000000000000000000000000"

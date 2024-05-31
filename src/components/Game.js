@@ -10,6 +10,7 @@ import {
   GridRow,
   GridColumn,
   Grid,
+  Icon,
 } from "semantic-ui-react";
 
 class Game extends React.Component {
@@ -162,9 +163,26 @@ class Game extends React.Component {
     }
     if (this.props.sessionId) {
       return (
-        <Segment>
+        <Segment style={{ position: "relative" }}>
+          <div
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+            }}
+          >
+            <Button
+              icon
+              labelPosition="right"
+              color="blue"
+              onClick={() => this.getGameInfo()}
+            >
+              <Icon name="refresh" />
+              Refresh
+            </Button>
+          </div>
+
           <div style={{ textAlign: "center" }}>
-            {" "}
             {this.props.sessionId}
             <br />
             {`Pot: ${Number(this.state.pot)} LINK`}
@@ -173,11 +191,25 @@ class Game extends React.Component {
 
           <Grid divided="vertically">
             <GridRow columns={2}>
-              <GridColumn>
+              <GridColumn
+                style={{
+                  border:
+                    this.state.player1 === this.props.account
+                      ? "1px solid blue"
+                      : "none",
+                }}
+              >
                 <div>Player1: {this.state.player1}</div>
                 <div>Status: {this.state.player1Status}</div>
               </GridColumn>
-              <GridColumn>
+              <GridColumn
+                style={{
+                  border:
+                    this.state.player2 === this.props.account
+                      ? "1px solid blue"
+                      : "none",
+                }}
+              >
                 <div>Player2: {this.state.player2}</div>
                 <div>Status: {this.state.player2Status}</div>
               </GridColumn>
@@ -225,33 +257,35 @@ class Game extends React.Component {
       });
       this.props.gameContract.on(
         filterFire,
-        async (player, sessionId, randomNumber) => {
+        async (sessionId, player, randomNumber) => {
           console.log(
             "revolver fired: ",
-            player,
+            sessionId,
             sessionId,
             Number(randomNumber._hex)
           );
 
           if (ethers.utils.getAddress(player) === this.state.player1) {
             this.setState({
-              player1Status: `Revolver Fired: ${
+              player1Status:
                 Number(randomNumber._hex) == 3 ? (
-                  <span style={{ color: "red" }}>Bang!</span>
+                  <div>
+                    <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
+                  </div>
                 ) : (
-                  "Click..."
-                )
-              }`,
+                  "Revovler Fired: Click..."
+                ),
             });
           } else if (ethers.utils.getAddress(player) === this.state.player2) {
             this.setState({
-              player2Status: `Revolver Fired: ${
+              player2Status:
                 Number(randomNumber._hex) == 3 ? (
-                  <span style={{ color: "red" }}>Bang!</span>
+                  <div>
+                    <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
+                  </div>
                 ) : (
-                  "Click..."
-                )
-              }`,
+                  "Revovler Fired: Click..."
+                ),
             });
           }
           await this.getGameInfo();
@@ -273,7 +307,6 @@ class Game extends React.Component {
       <div>
         <Container className="box" style={{ marginTop: "20px" }}>
           {this.displayGame()}
-          <button onClick={() => this.getGameInfo()}>refresh</button>
           <div className={`error ${this.state.fadeOut ? "fade-out" : ""}`}>
             {this.state.error}
           </div>
