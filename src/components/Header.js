@@ -11,36 +11,6 @@ class NavBar extends React.Component {
     networkIcon: <Icon name="cancel" color="red" />,
     network: null,
   };
-  // async componentDidMount() {
-  //   if (window.ethereum) {
-  //     try {
-  //       // Prompt user to connect their wallet
-  //       await window.ethereum.request({ method: "eth_requestAccounts" });
-
-  //       // Listen for the connect event
-  //       window.ethereum.on("connect", async () => {
-  //         const networkId = await provider.getNetwork();
-  //         console.log(networkId.chainId);
-  //         this.setState({ network: networkId.chainId });
-  //         console.log(networkId.chainId);
-  //       });
-
-  //       // Listen for chain changes
-  //       window.ethereum.on("chainChanged", async () => {
-  //         const networkId = await provider.getNetwork();
-  //         this.setState({ network: networkId.chainId });
-  //       });
-
-  //       // Initial network check
-  //       const networkId = await provider.getNetwork();
-  //       this.setState({ network: networkId.chainId });
-  //     } catch (error) {
-  //       console.error("User denied account access", error);
-  //     }
-  //   } else {
-  //     console.error("MetaMask is not installed");
-  //   }
-  // }
 
   render() {
     return (
