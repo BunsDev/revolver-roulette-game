@@ -2,7 +2,7 @@
 
 2 Player Russian Roulette game built with Chainlink VRF.
 
-###To run the game:
+### To run the game:
 
 ### `git clone https://github.com/notsebastian/Hackathon24_Revolver.git`
 
