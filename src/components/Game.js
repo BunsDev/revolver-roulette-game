@@ -1,8 +1,8 @@
 import "../css//App.css";
 import "../css/game.css";
 import React from "react";
-import { signer, provider } from "../web3";
-import { ethers, BigNumber } from "ethers";
+import { provider } from "../web3";
+import { ethers } from "ethers";
 import {
   Container,
   Button,
@@ -269,9 +269,7 @@ class Game extends React.Component {
             this.setState({
               player1Status:
                 Number(randomNumber._hex) == 3 ? (
-                  <div>
-                    <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
-                  </div>
+                  <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
                 ) : (
                   "Revovler Fired: Click..."
                 ),
@@ -280,9 +278,7 @@ class Game extends React.Component {
             this.setState({
               player2Status:
                 Number(randomNumber._hex) == 3 ? (
-                  <div>
-                    <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
-                  </div>
+                  <span style={{ color: "red" }}>Revolver Fired: Bang!</span>
                 ) : (
                   "Revovler Fired: Click..."
                 ),

@@ -219,7 +219,7 @@ contract Revolver is VRFConsumerBaseV2Plus {
 
         require(gs.lastSpinner == msg.sender, "not your turn to fire!");
         require(gs.winner == address(0), "game over!");
-
+        require(gs.turn == msg.sender, "not your turn!");
         require(request.fulfilled, "VRF request not fulfilled!");
 
         uint256 randomNumber = request.randomWords[0] % 6;

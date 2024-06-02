@@ -27,7 +27,7 @@ class App extends React.Component {
       try {
         //contract instances
         let gameContract = new ethers.Contract(
-          "0x1a6cf933E81890D5C16b47309Aa6853296e25B29",
+          "0xC2E845b63bFAa92D85CB8B428FD7cb98672BAE83",
           gameAbi,
           signer
         );
@@ -42,7 +42,6 @@ class App extends React.Component {
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
-        console.log(accounts[0]);
         this.setState({ account: ethers.utils.getAddress(accounts[0]) });
 
         // listen for the connect event
